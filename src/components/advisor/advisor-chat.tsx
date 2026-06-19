@@ -36,7 +36,11 @@ export function AdvisorChat({ propertyId }: { propertyId: string }) {
       const res = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ propertyId, sessionId, message: text }),
+        body: JSON.stringify({
+          propertyId,
+          sessionId: sessionId ?? undefined,
+          message: text,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {

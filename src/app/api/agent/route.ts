@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 const bodySchema = z.object({
   propertyId: z.uuid(),
-  sessionId: z.uuid().optional(),
+  sessionId: z.uuid().nullish(), // first turn sends null
   message: z.string().trim().min(1).max(4000),
 });
 
