@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { TourSplat } from "@/components/viewer/tour-splat";
+import { AdvisorChat } from "@/components/advisor/advisor-chat";
 
 // Public, no-auth page. Always rendered fresh so signed URLs stay valid and
 // only published properties are ever exposed.
@@ -90,6 +91,8 @@ export default async function TourPage({
           <p className="text-sm text-white/80 drop-shadow">{property.address}</p>
         )}
       </div>
+
+      <AdvisorChat propertyId={property.id} />
     </main>
   );
 }
