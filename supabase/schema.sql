@@ -32,11 +32,9 @@ begin
   return new;
 end; $$;
 
--- agency_id de l'utilisateur courant (SECURITY DEFINER pour éviter la récursion RLS sur profiles)
-create or replace function current_agency_id()
-returns uuid language sql stable security definer set search_path = public as $$
-  select agency_id from profiles where id = auth.uid();
-$$;
+-- NOTE : current_agency_id() est défini plus bas, APRÈS la table `profiles`
+-- (une fonction `language sql` valide son corps à la création : la table
+-- référencée doit déjà exister).
 
 -- ----------------------------------------------------------------------------
 -- Tables
@@ -62,6 +60,13 @@ create table profiles (
   updated_at  timestamptz not null default now()
 );
 create index idx_profiles_agency on profiles(agency_id);
+
+-- agency_id de l'utilisateur courant (SECURITY DEFINER pour éviter la récursion
+-- RLS sur profiles). Défini ici car son corps référence la table `profiles`.
+create or replace function current_agency_id()
+returns uuid language sql stable security definer set search_path = public as $$
+  select agency_id from profiles where id = auth.uid();
+$$;
 
 -- Biens
 create table properties (
