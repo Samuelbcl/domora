@@ -12,13 +12,19 @@ import { z } from "zod";
  * effectively required at their respective build steps (6 / 7 / 9).
  */
 
+// Treat empty strings (e.g. `FOO=` in .env) as "not set" for optional vars.
+const optional = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess((v) => (v === "" ? undefined : v), schema.optional());
+
 // ---------------------------------------------------------------------------
 // Client (browser-safe) — must be referenced statically so Next can inline them
 // ---------------------------------------------------------------------------
 const clientSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.url(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
-  NEXT_PUBLIC_APP_URL: z.url(),
+  // Optional: defaults to the Vercel deployment URL, else localhost. Set it
+  // explicitly to a stable domain for correct public tour links.
+  NEXT_PUBLIC_APP_URL: optional(z.url()),
 });
 
 const clientValues = {
@@ -27,9 +33,11 @@ const clientValues = {
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
 };
 
-// Treat empty strings (e.g. `FOO=` in .env) as "not set" for optional vars.
-const optional = <T extends z.ZodTypeAny>(schema: T) =>
-  z.preprocess((v) => (v === "" ? undefined : v), schema.optional());
+function resolveAppUrl(explicit: string | undefined): string {
+  if (explicit) return explicit;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
+}
 
 // ---------------------------------------------------------------------------
 // Server (secrets) — parsed only on the server
@@ -82,6 +90,8 @@ if (isServer) {
 export const env = {
   ...parsedClient.data,
   ...serverEnv,
+  // Always a usable absolute URL (explicit value, Vercel URL, or localhost).
+  NEXT_PUBLIC_APP_URL: resolveAppUrl(parsedClient.data.NEXT_PUBLIC_APP_URL),
 };
 
 export type Env = typeof env;
