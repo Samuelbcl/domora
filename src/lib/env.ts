@@ -27,6 +27,10 @@ const clientValues = {
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
 };
 
+// Treat empty strings (e.g. `FOO=` in .env) as "not set" for optional vars.
+const optional = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess((v) => (v === "" ? undefined : v), schema.optional());
+
 // ---------------------------------------------------------------------------
 // Server (secrets) — parsed only on the server
 // ---------------------------------------------------------------------------
@@ -35,18 +39,18 @@ const serverSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
 
   // Anthropic — agent IA (step 6). Model from env, never hardcoded.
-  ANTHROPIC_API_KEY: z.string().min(1).optional(),
-  ANTHROPIC_MODEL: z.string().min(1).optional(),
+  ANTHROPIC_API_KEY: optional(z.string().min(1)),
+  ANTHROPIC_MODEL: optional(z.string().min(1)),
 
   // Restyle 2D provider (step 7) — abstracted behind RestyleProvider.
-  RESTYLE_PROVIDER: z.enum(["fal", "replicate"]).optional(),
-  FAL_KEY: z.string().min(1).optional(),
-  REPLICATE_API_TOKEN: z.string().min(1).optional(),
+  RESTYLE_PROVIDER: optional(z.enum(["fal", "replicate"])),
+  FAL_KEY: optional(z.string().min(1)),
+  REPLICATE_API_TOKEN: optional(z.string().min(1)),
 
   // Resend — lead notification emails (step 9).
-  RESEND_API_KEY: z.string().min(1).optional(),
-  RESEND_FROM_EMAIL: z.email().optional(),
-  LEADS_NOTIFICATION_EMAIL: z.email().optional(),
+  RESEND_API_KEY: optional(z.string().min(1)),
+  RESEND_FROM_EMAIL: optional(z.email()),
+  LEADS_NOTIFICATION_EMAIL: optional(z.email()),
 });
 
 function formatIssues(error: z.ZodError): string {
